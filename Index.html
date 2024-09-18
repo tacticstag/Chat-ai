@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chatbot with DeepAI</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+        }
+        #chat-container {
+            width: 300px;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            padding: 10px;
+        }
+        #messages {
+            height: 400px;
+            overflow-y: scroll;
+            border: 1px solid #ccc;
+            padding: 5px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+        .message {
+            margin: 5px 0;
+        }
+        .user-message {
+            text-align: right;
+            color: blue;
+        }
+        .bot-message {
+            text-align: left;
+            color: green;
+        }
+        #user-input {
+            width: calc(100% - 60px);
+        }
+        #send-button {
+            width: 50px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="chat-container">
+    <div id="messages"></div>
+    <input type="text" id="user-input" placeholder="Type your message here...">
+    <button id="send-button">Send</button>
+</div>
+
+<script>
+    const messagesDiv = document.getElementById("messages");
+    const inputField = document.getElementById("user-input");
+    const sendButton = document.getElementById("send-button");
+
+    async function getAIResponse(userMessage) {
+        // Set up your API endpoint and headers here
+        const apiEndpoint = 'https://api.deepai.org/api/chat';
+        const apiKey = 'YOUR_API_KEY'; // Replace with your actual DeepAI API key
+
+        const response = await fetch(apiEndpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'api-key': apiKey // Send the API key in headers
+            },
+            body: JSON.stringify({ text: userMessage }), // Sending user message in body
+        });
+
+        const data = await response.json();
+        return data.output; // Assuming the AI's response is in the `output` field
+    }
+
+    sendButton.addEventListener("click", async function() {
+        const userMessage = inputField.value;
+        if (userMessage.trim() === "") return;
+
+        // Append user message
+        messagesDiv.innerHTML += `<div class="message user-message">${userMessage}</div>`;
+        inputField.value = "";
+
+        // Get bot response asynchronously
+        try {
+            const botResponse = await getAIResponse(userMessage);
+            messagesDiv.innerHTML += `<div class="message bot-message">${botResponse}</div>`;
+        } catch (error) {
+            console.error("Error fetching bot response:", error);
+            messagesDiv.innerHTML += `<div class="message bot-message">Sorry, there was an error.</div>`;
+        }
+
+        // Scroll to the bottom of messages
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    });
+
+    // Optional: Allow pressing 'Enter' to send the message
+    inputField.addEventListener("keypress", function(event) {
+        if (event.key === "Enter") {
+            sendButton.click();
+        }
+    });
+</script>
+
+</body>
+</html>
