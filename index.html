@@ -54,117 +54,25 @@
     const checkIpButton = document.getElementById("check-ip-button");
     const userIpInfo = document.getElementById("user-ip-info");
 
-    // Country mapping based on starting digits (IP ranges)
-    const countryCodes = {
-        // Oceania
-        '1': 'Australia',
-        '27': 'New Zealand',
-        '61': 'Australia', 
-        '64': 'New Zealand',
-
-        // North America (IPv4 Classes)
-        '24': 'United States',
-        '50': 'United States',
-        '68': 'United States',
-        '70': 'United States',
-        '71': 'United States',
-        '72': 'United States',
-        '73': 'United States',
-        '74': 'United States',
-        '75': 'United States',
-        '76': 'United States',
-        '77': 'United States',
-        '78': 'United States',
-        '79': 'United States',
-        '80': 'United States',
-        '81': 'Canada',
-        '82': 'United States',
-        '83': 'United States',
-        '84': 'Canada',
-        '85': 'Canada',
-        '86': 'Canada',
-        '87': 'Canada',
-        '88': 'Canada',
-        '89': 'Canada',
-
-        // Central and South America
-        '54': 'Argentina',
-        '55': 'Brazil',
-        '56': 'Chile',
-        '57': 'Colombia',
-        '51': 'Peru',
-        '52': 'Mexico',
-        
-        // Europe
-        '44': 'United Kingdom',
-        '46': 'Sweden',
-        '49': 'Germany',
-        '39': 'Italy',
-        '34': 'Spain',
-        '31': 'Netherlands',
-        '41': 'Switzerland',
-        '30': 'Greece',
-        '32': 'Belgium',
-        '36': 'Hungary',
-        '353': 'Ireland',
-
-        // Asia
-        '91': 'India',
-        '81': 'Japan',
-        '86': 'China',
-        '62': 'Indonesia',
-        '60': 'Malaysia',
-        '63': 'Philippines',
-        '82': 'South Korea',
-        '66': 'Thailand',
-        '94': 'Sri Lanka',
-        '973': 'Bahrain',
-        '971': 'United Arab Emirates',
-        '968': 'Oman',
-        '970': 'Palestine',
-        
-        // Middle East
-        '972': 'Israel',
-        '974': 'Qatar',
-        '964': 'Iraq',
-        '965': 'Kuwait',
-
-        // If none match
-        '': 'Maybe from Antarctica or on mobile data'
-    };
-
-    // Validate if an input string is a valid IPv4 address
-    function isValidIp(ip) {
-        const ipRegex = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
-        return ipRegex.test(ip);
-    }
-
-    // Function to get the country from the IP
-    function getCountryFromIp(ip) {
-        const firstPart = ip.split('.')[0]; // Get the first octet of the IP address
-        return countryCodes[firstPart] || null; // Look up country by first octet
-    }
-
-    // Function to fetch your public IP and location using multiple APIs
+    // Function to fetch your public IP and location using APIs
     async function fetchYourIp() {
-        const ipApiUrls = [
+        const urls = [
             "https://api.ipify.org?format=json",
             "https://ipapi.co/json/",
             "https://ipinfo.io/json",
-            "https://ip-api.com/json/",
+            "https://ip-api.com/json/ip",
         ];
 
-        for (const url of ipApiUrls) {
+        for (const url of urls) {
             try {
                 const response = await fetch(url);
                 const data = await response.json();
-
                 if (data.ip) {
                     yourIpElement.textContent = data.ip;
 
-                    const country = getCountryFromIp(data.ip);
-                    yourLocationElement.textContent = country ? country : "Location not available";
-                    return; // Exit the loop if successful
+                    // Set location more reliably
+                    yourLocationElement.textContent = data.country || "Location not available";
+                    return;
                 }
             } catch (error) {
                 console.error("Error fetching your IP data:", error);
@@ -172,6 +80,12 @@
         }
         yourIpElement.textContent = "Could not retrieve IP";
         yourLocationElement.textContent = "Could not retrieve location";
+    }
+
+    // Validate if an input string is a valid IPv4 address
+    function isValidIp(ip) {
+        const ipRegex = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+        return ipRegex.test(ip);
     }
 
     // Function to fetch location for a provided IP
@@ -192,10 +106,8 @@
                 const data = await response.json();
 
                 if (data.status === "success") {
-                    const country = getCountryFromIp(ip);
-                    const location = country ? country : `${data.city}, ${data.region}`;
-                    userIpInfo.innerHTML = `<strong>Location:</strong> ${location || 'Unknown Location'}, ${data.country || 'Unknown Country'}`;
-                    return; // Exit the loop if success
+                    userIpInfo.innerHTML = `<strong>Location:</strong> ${data.city || 'Unknown City'}, ${data.region || 'Unknown Region'}, ${data.country || 'Unknown Country'}`;
+                    return;
                 } else {
                     userIpInfo.innerHTML = `<strong>Error:</strong> ${data.message}`;
                 }
@@ -209,7 +121,7 @@
 
     checkIpButton.addEventListener("click", () => {
         const ip = userIpInput.value.trim();
-        fetchUserIpLocation(ip); // Call the function to get location data
+        fetchUserIpLocation(ip);
     });
 
     // Fetch your public IP and location on page load
